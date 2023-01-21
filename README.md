@@ -60,4 +60,7 @@ ___
 
 ![image](https://user-images.githubusercontent.com/51255216/213882337-e472b4a2-ece7-4077-a678-1fe2df2e7be8.png)
 
- 
+### Discount Invalidation
+1. Would it be possible to remove tickets after a discount has been *applied*? This is important as discounts may be invalidated when certain tickets are removed - see Cart H
+
+![image](https://user-images.githubusercontent.com/51255216/213894656-baad2105-17d2-4e28-898b-0042b1f39011.png)
