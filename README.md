@@ -39,12 +39,24 @@ ___
 ### Discount Specific (Group Discount): 
 1. When there is a cart with 4 or more Adults and 1 Child, does the 10% discount apply to the whole cart? or just the adults? - see Cart A
 
+![image](https://user-images.githubusercontent.com/51255216/213882307-8c11d27e-5b2b-46c5-957d-f44839be2311.png)
+
 2. Is the group discount *event-specific* or *event-agnostic*? IE: cart has 4 Adults, three are for event ONE, one for event TWO, does the group discount still apply to the whole cart? - see Cart B
+
+![image](https://user-images.githubusercontent.com/51255216/213882311-f75fad0c-110b-4f1e-b4a3-820635dab95c.png)
 
 ### Discount Specific (Family Discount): 
 1. Are family discounts *event-specific* or *event-agnostic*? IE: if a cart has 2 Adults and 3 Children, 1 Adult and 2 children are booked for event ONE, and 1 adult and 1  can be applied to two families (2 adults, 3 children each). - see Cart C
 
+![image](https://user-images.githubusercontent.com/51255216/213882316-4e69e086-b7ea-4de0-8436-ecacc1d0cc0c.png)
+
 2. Can family discounts be applied more than once in a cart with sufficient tickets? - see cart D
+
+![image](https://user-images.githubusercontent.com/51255216/213882327-b56f737f-d200-48d4-a03e-b9bed7031645.png)
 
 ### Discount Specific (Group and Family Discount Combination):
 1. In a case where are cart is eligible for both group and family discount. Can both be applied? or is a cart restricted to one type of discount only? - see Cart E
+
+![image](https://user-images.githubusercontent.com/51255216/213882337-e472b4a2-ece7-4077-a678-1fe2df2e7be8.png)
+
+ 
