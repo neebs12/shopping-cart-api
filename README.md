@@ -35,6 +35,7 @@ ___
 
 ### Cart Specific: 
 1. Can a cart have tickets for more than one event at a time?
+2. Are there any restrictions to the amount of tickets a cart can have apart from the `bookingLimits` imposed by the events themselves? 
 
 ### Discount Specific (Group Discount): 
 1. When there is a cart with 4 or more Adults and 1 Child, does the 10% discount apply to the whole cart? or just the adults? - see Cart A
