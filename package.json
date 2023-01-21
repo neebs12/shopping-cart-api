@@ -1,0 +1,22 @@
+{
+  "name": "iticket-backend-technical",
+  "version": "1.0.0",
+  "description": "iticket-backend-technical",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "knex": "^2.4.1",
+    "sqlite3": "^5.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  },
+    "type": "module"
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "eventId": 1,
+    "price": 25,
+    "type": "Adult"
+  },
+  {
+    "id": 2,
+    "eventId": 1,
+    "price": 15,
+    "type": "Child"
+  }
+]
