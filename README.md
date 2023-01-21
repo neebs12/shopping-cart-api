@@ -41,12 +41,12 @@ ___
 
 ![image](https://user-images.githubusercontent.com/51255216/213882307-8c11d27e-5b2b-46c5-957d-f44839be2311.png)
 
-2. Is the group discount *event-specific* or *event-agnostic*? IE: cart has 4 Adults, three are for event ONE, one for event TWO, does the group discount still apply to the whole cart? - see Cart B
+2. Is the group discount *event-specific* or *event-agnostic*? If I have 4 Adults spread in to multiple events, does the group discount apply? - see Cart B
 
 ![image](https://user-images.githubusercontent.com/51255216/213882311-f75fad0c-110b-4f1e-b4a3-820635dab95c.png)
 
 ### Discount Specific (Family Discount): 
-1. Are family discounts *event-specific* or *event-agnostic*? IE: if a cart has 2 Adults and 3 Children, 1 Adult and 2 children are booked for event ONE, and 1 adult and 1  can be applied to two families (2 adults, 3 children each). - see Cart C
+1. Are family discounts *event-specific* or *event-agnostic*? If I have a family spread through multiple events, does the family discount still apply? - see Cart C
 
 ![image](https://user-images.githubusercontent.com/51255216/213882316-4e69e086-b7ea-4de0-8436-ecacc1d0cc0c.png)
 
