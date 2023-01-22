@@ -10,48 +10,24 @@ const { ENV } = process.env;
 
 const app = express();
 
+app.use(express.json());
+
 app.use(
-  ENV === "DEV"
-    ? middleware.requestLogger
-    : (req, res, next) => {
-        next();
-      }
+  ENV === "DEV" ? middleware.requestLogger : middleware.autoNextMiddleware
 );
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-// Identifies if the cart id is valid or not.
-app.all("/cart/:id*", async (req, res, next) => {
-  try {
-    const cartId = Number(req.params.id);
-    const content = await cartDB.fetchByCartId(cartId);
-    if (content.length === 0) {
-      throw new Error("Invalid Cart Id");
-    }
-    next();
-  } catch (err) {
-    next({ type: "client", message: err.message });
-  }
-});
+// Validate and extract cart id
+app.all("/cart/:id*", middleware.validateCartId, middleware.extractCartId);
 
 // Routes
 app.use("/cart", cartRoutes);
 app.use("/cart/:id/ticket", ticketRoutes);
 
-app.all("*", (req, res, next) => {
-  next({ type: "client", message: "Unknown Endpoint" });
-});
-
-app.use((err, req, res, next) => {
-  const { type, message } = err;
-  logger.error(message);
-  if (type === "internal") {
-    res.status(500).json({ message });
-  } else if (type === "client") {
-    res.status(404).json({ message });
-  }
-});
+app.all("*", middleware.unknownEndpoint);
+app.use(middleware.errorHandler);
 
 module.exports = app;
