@@ -4,6 +4,17 @@ function fetchTicketsByCartId(cartId, db = connection) {
   return db("ticket").select().where("cart_id", cartId);
 }
 
+function fetchTicketsByCartIdAndEventId(cartId, eventId, db = connection) {
+  return db("ticket")
+    .select()
+    .where("cart_id", cartId)
+    .andWhere("event_id", eventId);
+}
+
+function fetchTicketsByEventId(cartId, eventId, db = connection) {
+  return db("ticket").select().where("event_id", eventId);
+}
+
 function addTicketByCartId(cartId, ticket, db = connection) {
   return db("ticket")
     .insert({ ...ticket, cart_id: cartId })
@@ -16,6 +27,8 @@ function removeTicketByTicketId(ticketId, db = connection) {
 
 module.exports = {
   fetchTicketsByCartId,
+  fetchTicketsByCartIdAndEventId,
+  fetchTicketsByEventId,
   addTicketByCartId,
   removeTicketByTicketId,
 };
