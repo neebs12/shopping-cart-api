@@ -29,11 +29,17 @@ app.get("/cart/:id", async (req, res, next) => {
   }
 });
 
+app.all("*", (req, res, next) => {
+  next({ type: "client", message: "Unknown Endpoint" });
+});
+
 app.use((err, req, res, next) => {
   const { type, message } = err;
+  logger.error(message);
   if (type === "internal") {
-    logger.error(message);
-    res.status(500).json("Something went wrong");
+    res.status(500).json({ message });
+  } else if (type === "client") {
+    res.status(404).json({ message });
   }
 });
 
