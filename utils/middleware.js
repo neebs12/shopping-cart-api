@@ -42,7 +42,7 @@ const errorHandler = (err, req, res, next) => {
   if (type === "internal") {
     res.status(500).json({ message });
   } else if (type === "client") {
-    res.status(404).json({ message });
+    res.status(400).json({ message });
   }
 };
 
