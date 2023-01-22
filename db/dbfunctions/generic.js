@@ -1,9 +1,9 @@
 const connection = require("../connection");
 
-function getByTableName(tableName, db = connection) {
+function fetchByTableName(tableName, db = connection) {
   return db(tableName).select();
 }
 
 module.exports = {
-  getByTableName,
+  fetchByTableName,
 };
