@@ -38,5 +38,13 @@ exports.seed = async function (knex) {
       price: 25,
       seat_id: 47,
     },
+    {
+      id: 5,
+      cart_id: 101,
+      event_id: 1,
+      type: "Adult",
+      price: 25,
+      seat_id: 46,
+    },
   ]);
 };
