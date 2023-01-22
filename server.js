@@ -1,9 +1,11 @@
 const express = require("express");
 const middleware = require("./utils/middleware.js");
 const logger = require("./utils/logger.js");
-const cartDB = require("./db/dbfunctions/cart.js");
-const ticketDB = require("./db/dbfunctions/ticket.js");
 
+const cartRoutes = require("./routes/cart.routes.js");
+const ticketRoutes = require("./routes/ticket.routes.js");
+
+const cartDB = require("./db/dbfunctions/cart.js");
 const { ENV } = process.env;
 
 const app = express();
@@ -20,7 +22,7 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-// this is a catch all middleware to handle all routes that start with /cart/:id. This is to identify if the cart id is valid or not.
+// Identifies if the cart id is valid or not.
 app.all("/cart/:id*", async (req, res, next) => {
   try {
     const cartId = Number(req.params.id);
@@ -34,15 +36,9 @@ app.all("/cart/:id*", async (req, res, next) => {
   }
 });
 
-app.get("/cart/:id", async (req, res, next) => {
-  try {
-    const cartId = Number(req.params.id);
-    const content = await ticketDB.fetchTicketsByCartId(cartId);
-    res.json(content);
-  } catch (err) {
-    next({ type: "internal", message: err.message });
-  }
-});
+// Routes
+app.use("/cart", cartRoutes);
+app.use("/cart/:id/ticket", ticketRoutes);
 
 app.all("*", (req, res, next) => {
   next({ type: "client", message: "Unknown Endpoint" });
