@@ -8,7 +8,7 @@ router.get("/:id", async (req, res, next) => {
   try {
     const cartId = Number(req.params.id);
     const content = await ticketDB.fetchTicketsByCartId(cartId);
-    res.json(content);
+    res.json({ tickets: content });
   } catch (err) {
     next({ type: "internal", message: err.message });
   }
