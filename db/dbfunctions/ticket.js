@@ -4,7 +4,7 @@ function fetchTicketsByCartId(cartId, db = connection) {
   return db("ticket").select().where("cart_id", cartId);
 }
 
-function addTicketByCartId(ticket, cartId, db = connection) {
+function addTicketByCartId(cartId, ticket, db = connection) {
   return db("ticket")
     .insert({ ...ticket, cart_id: cartId })
     .then((ids) => ids[0]); // returns db id of the added ticket

@@ -1,0 +1,11 @@
+## add a ticket
+POST http://localhost:3000/cart/102/ticket
+Content-Type: application/json
+
+{ 
+  "ticket": {
+    "type": "Adult",
+    "event_id": 1,
+    "seat_id": 10
+  }
+}
