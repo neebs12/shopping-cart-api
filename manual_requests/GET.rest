@@ -3,3 +3,6 @@ GET http://localhost:3000/cart/100
 
 ### GET users
 GET http://localhost:3000/cart/101
+
+### GET users, does not exists
+GET http://localhost:3000/cart/999

@@ -1,12 +1,10 @@
-const logger = (...msg) => {
-  console.log(">", ...msg);
-};
+const logger = require("./logger");
 
-const requestLogger = (req, _res, next) => {
-  logger("Method: ", req.method);
-  logger("Path: ", req.path);
-  logger("Body: ", req.body);
-  logger("---");
+const requestLogger = (req, res, next) => {
+  logger.info("Method: ", req.method);
+  logger.info("Path: ", req.path);
+  logger.info("Body: ", req.body || "No body");
+  logger.info("---");
   next();
 };
 
