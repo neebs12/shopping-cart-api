@@ -11,7 +11,7 @@
     "rollback": "npm run knex migrate:rollback",
     "seed": "npm run knex seed:run --specific=cart.js",
     "knex:reset": "npm run rollback && npm run migrate && npm run seed",
-    "test:watch": "jest --silent --runInBand --detectOpenHandles --forceExit --watch"
+    "test:watch": "npm run knex:reset && jest --runInBand --detectOpenHandles --forceExit --watch"
   },
   "author": "",
   "license": "ISC",

@@ -2,11 +2,6 @@ const app = require("./server.js");
 const supertest = require("supertest");
 const request = supertest(app);
 
-beforeAll(async () => {
-  // supress errors
-  global.console.error = () => {};
-});
-
 // test health from "/"
 it("GET /", async () => {
   const response = await request.get("/");

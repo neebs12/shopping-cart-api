@@ -6,6 +6,7 @@ Content-Type: application/json
   "ticket": {
     "type": "Adult",
     "event_id": 1,
-    "seat_id": 10
+    "seat_id": 10,
+    "ga_area_id": null
   }
 }
