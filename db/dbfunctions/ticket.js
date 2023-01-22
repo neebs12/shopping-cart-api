@@ -29,6 +29,13 @@ function removeTicketByCartId(cartId, db = connection) {
   return db("ticket").where("cart_id", cartId).delete();
 }
 
+function removeTicketByCartIdAndTicketId(cartId, ticketId, db = connection) {
+  return db("ticket")
+    .where("cart_id", cartId)
+    .andWhere("id", ticketId)
+    .delete();
+}
+
 module.exports = {
   fetchTicketsByCartId,
   fetchTicketsByCartIdAndEventId,
@@ -36,4 +43,5 @@ module.exports = {
   addTicketByCartId,
   removeTicketByTicketId,
   removeTicketByCartId,
+  removeTicketByCartIdAndTicketId,
 };

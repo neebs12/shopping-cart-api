@@ -232,3 +232,113 @@ describe("sad path ticket addition", () => {
     expect(secondResponse.statusCode).toBe(400);
   });
 });
+
+// happy path ticket deletion
+describe("happy path ticket deletion", () => {
+  // delete ticket
+  it("delete ticket", async () => {
+    const cartId = 200;
+    const ticket = { type: "Adult", event_id: 1, seat_id: 1, ga_area_id: null };
+    const firstResponse = await request
+      .post(`/cart/${cartId}/ticket`)
+      .send({ ticket });
+
+    expect(firstResponse.statusCode).toBe(200);
+    expect(firstResponse.body).toHaveProperty("id");
+
+    const response = await request.delete(
+      `/cart/${cartId}/ticket/${firstResponse.body.id}`
+    );
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  // add a two different tickets to the cart and delete one of them
+  it("delete one of two tickets", async () => {
+    const cartId = 200;
+    const ticket1 = {
+      type: "Adult",
+      event_id: 1,
+      seat_id: 1,
+      ga_area_id: null,
+    };
+    const firstResponse = await request
+      .post(`/cart/${cartId}/ticket`)
+      .send({ ticket: ticket1 });
+
+    expect(firstResponse.statusCode).toBe(200);
+    expect(firstResponse.body).toHaveProperty("id");
+
+    const ticket2 = {
+      type: "Adult",
+      event_id: 1,
+      seat_id: 2,
+      ga_area_id: null,
+    };
+    const secondResponse = await request
+      .post(`/cart/${cartId}/ticket`)
+      .send({ ticket: ticket2 });
+
+    expect(secondResponse.statusCode).toBe(200);
+
+    const response = await request.delete(
+      `/cart/${cartId}/ticket/${firstResponse.body.id}`
+    );
+
+    expect(response.statusCode).toBe(200);
+  });
+});
+
+// sad path tikcet deletion
+describe("sad path ticket deletion", () => {
+  // delete non-existent ticket
+  it("delete non-existent ticket", async () => {
+    const cartId = 200;
+    const response = await request.delete(`/cart/${cartId}/ticket/999`);
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  // deleting a ticket from another cart
+  it("delete ticket from another cart", async () => {
+    const cartId = 200;
+    const ticket = { type: "Adult", event_id: 1, seat_id: 1, ga_area_id: null };
+    const firstResponse = await request
+      .post(`/cart/${cartId}/ticket`)
+      .send({ ticket });
+
+    expect(firstResponse.statusCode).toBe(200);
+
+    const anotherCartId = 201;
+    const response = await request.delete(
+      `/cart/${anotherCartId}/ticket/${firstResponse.body.id}`
+    );
+
+    expect(response.statusCode).toBe(400);
+
+    // confirm is not deleted from the 200's cart
+    const getResponse = await request.get(`/cart/${cartId}`);
+    expect(getResponse.statusCode).toBe(200);
+    expect(getResponse.body.tickets.length).toBe(1);
+  });
+
+  // delete valid ticket from non-existent cart
+  it("delete valid ticket from non-existent cart", async () => {
+    const validCartId = 200;
+    const ticket = { type: "Adult", event_id: 1, seat_id: 1, ga_area_id: null };
+    const firstResponse = await request
+      .post(`/cart/${validCartId}/ticket`)
+      .send({ ticket });
+
+    expect(firstResponse.statusCode).toBe(200);
+    expect(firstResponse.body).toHaveProperty("id");
+
+    const invalidCartId = 999;
+    console.log({ ticketId: firstResponse.body.id });
+    const response = await request.delete(
+      `/cart/${invalidCartId}/ticket/${firstResponse.body.id}`
+    );
+
+    expect(response.statusCode).toBe(400);
+  });
+});

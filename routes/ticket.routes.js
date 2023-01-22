@@ -7,8 +7,13 @@ const {
   checkGlobalLimitForGAEvent,
   checkSeatAvailabilityForAllocatedEvent,
 } = require("./helpers/ticket.js");
-const eventsService = require("../data/events-service.js");
-const ticketDB = require("../db/dbfunctions/ticket.js");
+const { invalidateAnyDiscountsForCartId } = require("./helpers/discount.js");
+const { fetchEventById } = require("../data/events-service.js");
+const {
+  fetchTicketsByCartIdAndEventId,
+  fetchTicketsByEventId,
+  removeTicketByCartIdAndTicketId,
+} = require("../db/dbfunctions/ticket.js");
 
 const router = express.Router();
 
@@ -71,7 +76,7 @@ router.post("/", async (req, res, next) => {
     } = ticket;
     // find relevant info from,
     // event service, event{}
-    const event = await eventsService.fetchEventById(eventId);
+    const event = await fetchEventById(eventId);
     const {
       type: eventType,
       bookingLimit,
@@ -79,11 +84,11 @@ router.post("/", async (req, res, next) => {
       allocatedSeatIds,
     } = event;
     // ticket service, ticket[]
-    const cartTicketsForEvent = await ticketDB.fetchTicketsByCartIdAndEventId(
+    const cartTicketsForEvent = await fetchTicketsByCartIdAndEventId(
       cartId,
       eventId
     );
-    const globalTicketsForEvent = await ticketDB.fetchTicketsByEventId(eventId);
+    const globalTicketsForEvent = await fetchTicketsByEventId(eventId);
 
     // see 0.1, validates seatId and gaAreaId
     validateTicketPropertiesByEventType(ticket, eventType);
@@ -108,6 +113,34 @@ router.post("/", async (req, res, next) => {
     // valid ticket! now add to cart!
     const content = await addTicket(cartId, ticket);
     res.json({ id: content });
+  } catch (err) {
+    next({ type: "client", message: err.message });
+  }
+});
+
+/** delete a ticket from the cart
+ * - ticket has to exist first
+ * - ticket has to be in the cart, we can have this info on the number of affected rows when deleting. If `0`, then no deletion took place
+ * - once deleted, invalidate any tickets that may have existed before this ticket
+ */
+
+router.delete("/:ticket_id", async (req, res, next) => {
+  try {
+    const ticketId = Number(req.params.ticket_id);
+    const cartId = Number(res.locals.cartId);
+    const numTicketsDeleted = await removeTicketByCartIdAndTicketId(
+      cartId,
+      ticketId
+    );
+
+    if (numTicketsDeleted === 0) {
+      throw new Error(
+        `Ticket of cart:${cartId} and ticket:${ticketId} does not exist`
+      );
+    } else {
+      await invalidateAnyDiscountsForCartId(cartId);
+      res.json({ message: "ticket deleted" });
+    }
   } catch (err) {
     next({ type: "client", message: err.message });
   }
