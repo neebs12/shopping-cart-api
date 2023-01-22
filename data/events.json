@@ -18,7 +18,7 @@
     "imageUrl": "https://i.redd.it/g4tnkm3pzvv61.jpg",
     "type": "generalAdmission",
     "bookingLimit": 15,
-    "gaAreaIds": [1],
+    "gaAreaIds": [1, 2],
     "allocatedSeatIds": []
   }
 ]

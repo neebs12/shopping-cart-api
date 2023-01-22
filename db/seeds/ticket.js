@@ -13,6 +13,7 @@ exports.seed = async function (knex) {
       type: "Adult",
       price: 25,
       seat_id: 50,
+      ga_area_id: null,
     },
     {
       id: 2,
@@ -21,6 +22,7 @@ exports.seed = async function (knex) {
       type: "Adult",
       price: 25,
       seat_id: 49,
+      ga_area_id: null,
     },
     {
       id: 3,
@@ -29,6 +31,7 @@ exports.seed = async function (knex) {
       type: "Adult",
       price: 25,
       seat_id: 48,
+      ga_area_id: null,
     },
     {
       id: 4,
@@ -37,6 +40,7 @@ exports.seed = async function (knex) {
       type: "Adult",
       price: 25,
       seat_id: 47,
+      ga_area_id: null,
     },
     {
       id: 5,
@@ -45,6 +49,16 @@ exports.seed = async function (knex) {
       type: "Adult",
       price: 25,
       seat_id: 46,
+      ga_area_id: null,
+    },
+    {
+      id: 6,
+      cart_id: 101,
+      event_id: 2,
+      type: "Adult",
+      price: 25,
+      seat_id: null,
+      ga_area_id: 1,
     },
   ]);
 };

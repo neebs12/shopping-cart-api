@@ -13,8 +13,10 @@ exports.up = function (knex) {
     table.string("type").notNullable();
     // price of ticket, integer for simplicity, consider decimal()
     table.integer("price").notNullable();
-    // seat number, can be null for general admission events
+    // seat number, can be null if not an allocated event
     table.integer("seat_id");
+    // general admission area number, can be null if not an general admission events
+    table.integer("ga_area_id");
   });
 };
 
