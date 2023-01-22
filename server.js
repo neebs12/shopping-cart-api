@@ -4,6 +4,7 @@ const logger = require("./utils/logger.js");
 
 const cartRoutes = require("./routes/cart.routes.js");
 const ticketRoutes = require("./routes/ticket.routes.js");
+const discountRoutes = require("./routes/discount.routes.js");
 
 const cartDB = require("./db/dbfunctions/cart.js");
 const { ENV } = process.env;
@@ -26,6 +27,7 @@ app.all("/cart/:id*", middleware.validateCartId, middleware.extractCartId);
 // Routes
 app.use("/cart", cartRoutes);
 app.use("/cart/:id/ticket", ticketRoutes);
+app.use("/cart/:id/discount", discountRoutes);
 
 app.all("*", middleware.unknownEndpoint);
 app.use(middleware.errorHandler);

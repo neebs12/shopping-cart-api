@@ -22,5 +22,17 @@
     "eventId": 2,
     "price": 20,
     "type": "Child"
+  },
+  {
+    "id": 5,
+    "eventId": 3,
+    "price": 35,
+    "type": "Adult"
+  },
+  {
+    "id": 6,
+    "eventId": 3,
+    "price": 25,
+    "type": "Child"
   }
 ]
