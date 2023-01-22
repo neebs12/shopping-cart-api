@@ -11,7 +11,7 @@ function fetchTicketsByCartIdAndEventId(cartId, eventId, db = connection) {
     .andWhere("event_id", eventId);
 }
 
-function fetchTicketsByEventId(cartId, eventId, db = connection) {
+function fetchTicketsByEventId(eventId, db = connection) {
   return db("ticket").select().where("event_id", eventId);
 }
 
