@@ -1,6 +1,5 @@
 const {
   fetchTicketsByCartId,
-  fetchTicketsByCartIdAndEventId,
   fetchTicketsByCartIdAndEventIdAndType,
 } = require("../../db/dbfunctions/ticket.js");
 
@@ -136,35 +135,34 @@ const determineEligibleDiscountsByTickets = async (cartId) => {
   return eligibleDiscounts;
 };
 
-/**given calculated discounts for cart, filter given any already applied discounts
+/**
+ * given a new discount, validate discount for cart
  * @param {number} cartId
- * @param {object[]} eligibleDiscounts
- * @returns {object[]} filteredDiscounts
- * @example
- * // returns [{event_id: 1, type: "Family", amount: 1}, {event_id: 2, type: "Group", amount: 1}, ...]
- * */
-const filterByExisingDiscountsForCartId = async (cartId, eligibleDiscounts) => {
-  const filteredDiscounts = [];
+ * @param {{type, event_id}} newDiscount
+ * @returns {boolean} isValid
+ */
+const isDiscountValid = async (cartId, newDiscount) => {
+  // get eligible discounts, get filtered results
+  // compare filtered results with newDiscount,
+  // return either true or false
+  const eligibleDiscounts = await determineEligibleDiscountsByTickets(cartId);
 
-  for (let discount of eligibleDiscounts) {
-    const existingDiscounts = await fetchDiscountsByCartIdAndEventIdAndType(
-      cartId,
-      discount.event_id,
-      discount.type
-    );
+  const { type, event_id } = newDiscount;
+  // find against `fitleredDiscounts`
+  const found = eligibleDiscounts.find(
+    (discount) => discount.type === type && discount.event_id === event_id
+  );
 
-    const newAmount = discount.amount - existingDiscounts.length;
-
-    // if new amount is more than 0, then we add the discount to filteredDiscounts
-    if (newAmount > 0) {
-      filteredDiscounts.push({ ...discount, amount: newAmount });
-    }
+  if (found && found.amount > 0) {
+    // is a valid value, if statement for .amount is redundant but for readability
+    return true;
+  } else {
+    return false;
   }
-  return filteredDiscounts;
 };
 
 module.exports = {
   invalidateAnyDiscountsForCartId,
   determineEligibleDiscountsByTickets,
-  filterByExisingDiscountsForCartId,
+  isDiscountValid,
 };

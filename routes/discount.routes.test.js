@@ -61,3 +61,124 @@ describe("get all discounts for a cart", () => {
     expect(response2.body.discounts.length).toBe(1);
   });
 });
+
+// add discount to cart
+describe("add discount to cart", () => {
+  it("...with no tickets", async () => {
+    const adultResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Group" });
+    expect(adultResponse.statusCode).toBe(400);
+    expect(adultResponse.body).toHaveProperty("message");
+    expect(adultResponse.body.message).toBe("invalid discount");
+
+    const childResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Family" });
+    expect(childResponse.statusCode).toBe(400);
+    expect(childResponse.body.message).toBe("invalid discount");
+  });
+
+  it("...with 4As", async () => {
+    await addTicketsByCartId(cartId, Array(4).fill(adultTicketEvent2));
+
+    const adultResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Group" });
+    expect(adultResponse.statusCode).toBe(200);
+    expect(adultResponse.body).toHaveProperty("message");
+    expect(adultResponse.body.message).toBe("discount applied");
+
+    // family still none
+    const childResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Family" });
+    expect(childResponse.statusCode).toBe(400);
+  });
+
+  it("...with 4As in another cart", async () => {
+    await addTicketsByCartId(
+      otherCart,
+      Array(4).fill({ ...adultTicketEvent2 })
+    );
+
+    const adultResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Group" });
+    expect(adultResponse.statusCode).toBe(400);
+  });
+
+  it("...with 4As and 2Cs but discounts by 1g (1f is auto invalidated)", async () => {
+    await addTicketsByCartId(cartId, [
+      ...Array(4).fill(adultTicketEvent2),
+      ...Array(2).fill(childTicketEvent2),
+    ]);
+
+    const adultResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Group" });
+    expect(adultResponse.statusCode).toBe(200);
+
+    // wait, this shoudldnt happen... if the four adults are discounted, there is not enough adults for a family discount
+    const familyResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Family" });
+    expect(familyResponse.statusCode).toBe(400);
+
+    const adultResponse2 = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Group" });
+    expect(adultResponse2.statusCode).toBe(400);
+  });
+
+  it("...with 4As and 2Cs but discounts by 1f (1g is auto invalidated)", async () => {
+    await addTicketsByCartId(cartId, [
+      ...Array(4).fill(adultTicketEvent2),
+      ...Array(2).fill(childTicketEvent2),
+    ]);
+
+    const familyResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Family" });
+    expect(familyResponse.statusCode).toBe(200);
+
+    const adultResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Group" });
+    expect(adultResponse.statusCode).toBe(400);
+  });
+
+  it("...with 6As and 2Cs but discounts by 1f (1g is still available)", async () => {
+    await addTicketsByCartId(cartId, [
+      ...Array(6).fill(adultTicketEvent2),
+      ...Array(2).fill(childTicketEvent2),
+    ]);
+
+    const familyResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Family" });
+    expect(familyResponse.statusCode).toBe(200);
+
+    const adultResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Group" });
+    expect(adultResponse.statusCode).toBe(200);
+  });
+
+  it("...with 4As and 5Cs but discounts by 1f (1f is still available)", async () => {
+    await addTicketsByCartId(cartId, [
+      ...Array(4).fill(adultTicketEvent2),
+      ...Array(5).fill(childTicketEvent2),
+    ]);
+
+    const familyResponse = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Family" });
+    expect(familyResponse.statusCode).toBe(200);
+
+    const familyResponse2 = await request
+      .post(`/cart/${cartId}/discount`)
+      .send({ event_id: 2, type: "Family" });
+    expect(familyResponse2.statusCode).toBe(200);
+  });
+});

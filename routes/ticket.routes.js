@@ -123,7 +123,6 @@ router.post("/", async (req, res, next) => {
  * - ticket has to be in the cart, we can have this info on the number of affected rows when deleting. If `0`, then no deletion took place
  * - once deleted, invalidate any tickets that may have existed before this ticket
  */
-
 router.delete("/:ticket_id", async (req, res, next) => {
   try {
     const ticketId = Number(req.params.ticket_id);

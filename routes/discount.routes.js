@@ -21,13 +21,26 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-  // filter by existing discounts
-  const filteredDiscounts = await filterByExisingDiscountsForCartId(
-    cartId,
-    eligibleDiscounts
-  );
-
-  res.json({ discounts: filteredDiscounts });
+router.post("/", async (req, res, next) => {
+  try {
+    const cartId = res.locals.cartId;
+    const newDiscount = req.body;
+    // need to validate the discount isDiscountValid(cartId, newDiscount)
+    const isValid = await isDiscountValid(cartId, newDiscount);
+    if (!isValid) {
+      res.status(400).json({ message: "invalid discount" });
+    } else {
+      // add to db
+      await addDiscountByCartIdAndEventIdAndType(
+        cartId,
+        newDiscount.event_id,
+        newDiscount.type
+      );
+      res.json({ message: "discount applied" });
+    }
+  } catch (err) {
+    next({ type: "internal", message: err.message });
+  }
 });
 
 module.exports = router;
