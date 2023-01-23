@@ -161,6 +161,22 @@ const isDiscountValid = async (cartId, newDiscount) => {
   }
 };
 
+const invalidateDiscountForCartId = async (cartId) => {
+  // so the tickets are already deleted and the collection has been modified.
+  // given the new collection of tickets determine if the current collection of discounts are still valid
+  // if it is not valid, we need to remove those discounts until the collection of tickets is valid again
+  // - fetch all the discounts for the cart
+  // - get all the unique event_ids for the cart `uniqueEventIds`
+  // - iterate over `uniqueEventIds` to get the amount of "Group" and "Family" type discounts to get `groupDiscountAmount` and `familyDiscountAmount`
+  // - get the total number of "Adult" and "Child" tickets for each event_id
+  //   - NOT accounting for exisiting discounts! `adultNum` `childNum`
+  // - use `eligibleFamilyDiscount` = `calculateEligibleFamilyDiscount(adultNum, childNum)`
+  // - if there are any discrepancy between `eligibleFamilyDiscount` and `familyDiscountAmount` (ie: `eligibleFamilyDiscount` < `familyDiscountAmount`), then we need to remove the family discount! (so we need to fetch an id and remove that by that id)
+  // - use `eligibleGroupDiscount` = `calculateEligibleGroupDiscount(adultNum)`
+  // - if there are any discrepancy between `eligibleGroupDiscount` and `groupDiscountAmount` (ie: `eligibleGroupDiscount` < `groupDiscountAmount`), then we need to remove the group discount! (so we need to fetch an id and remove that by that id)
+  // at this point, the discounts are valid again
+};
+
 module.exports = {
   invalidateAnyDiscountsForCartId,
   determineEligibleDiscountsByTickets,
