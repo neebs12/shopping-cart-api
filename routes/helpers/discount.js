@@ -30,6 +30,58 @@ const calculateFamilyDiscount = (numOfAdultTickets, numOfChildTickets) => {
   return discountAmount;
 };
 
+// get total number of adult tickets in a cart for a given event
+// need to account for existing discounts
+const getTotalAdultNum = async (cartId, eventId) => {
+  const adultTicketNum = (
+    await fetchTicketsByCartIdAndEventIdAndType(cartId, eventId, "Adult")
+  ).length;
+  let undiscountedAdultTicketNum = adultTicketNum;
+
+  // determine if there has been any group discounts given cartId, eventId and type "Adult"
+  const groupDiscountNum = (
+    await fetchDiscountsByCartIdAndEventIdAndType(cartId, eventId, "Group")
+  ).length;
+
+  if (groupDiscountNum > 0) {
+    // if there are any group discounts picked up by the query, all the adults have already been discounted, set to `0`
+    undiscountedAdultTicketNum = 0;
+  } else {
+    // if there are no group discounts, then we need to check if there are any family discounts
+    const familyDiscountNum = (
+      await fetchDiscountsByCartIdAndEventIdAndType(cartId, eventId, "Family")
+    ).length;
+
+    if (familyDiscountNum > 0) {
+      // if there are any family discounts, we need to subtract from remaining. Each family discount accounts for 2 adults
+      undiscountedAdultTicketNum = adultTicketNum - familyDiscountNum * 2;
+    }
+  }
+  return undiscountedAdultTicketNum;
+};
+
+const getTotalChildNum = async (cartId, eventId) => {
+  const childTicketNum = (
+    await fetchTicketsByCartIdAndEventIdAndType(cartId, eventId, "Child")
+  ).length;
+  let undiscountedChildTicketNum = childTicketNum;
+
+  // determine if there has been any family discounts given cartId, eventId and type "Child"
+  const familyDiscountNum = (
+    await fetchDiscountsByCartIdAndEventIdAndType(cartId, eventId, "Family")
+  ).length;
+
+  if (familyDiscountNum > 0) {
+    // if there are any family discounts picked up by the query, this number is `n`
+    const discountedChildNum = familyDiscountNum * 3;
+    undiscountedChildTicketNum = childTicketNum - discountedChildNum;
+    // can be less than 0, if (childTicketNum % 3 === 2). IE: 4A, 5C, 2 family discounts
+    undiscountedChildTicketNum =
+      undiscountedChildTicketNum < 0 ? 0 : undiscountedChildTicketNum;
+  }
+  return undiscountedChildTicketNum;
+};
+
 // construct discount object to correct properties
 const constructDiscountObject = (eventId, ticketType, amount) => {
   return {
@@ -56,13 +108,9 @@ const determineEligibleDiscountsByTickets = async (cartId) => {
   for (let eventId of uniqueEventIds) {
     // get counts of each ticket type
 
-    const totalAdultNum = (
-      await fetchTicketsByCartIdAndEventIdAndType(cartId, eventId, "Adult")
-    ).length;
-
-    const totalChildNum = (
-      await fetchTicketsByCartIdAndEventIdAndType(cartId, eventId, "Child")
-    ).length;
+    const totalAdultNum = await getTotalAdultNum(cartId, eventId);
+    const totalChildNum = await getTotalChildNum(cartId, eventId);
+    // console.log({ totalAdultNum, totalChildNum, eventId });
 
     // determine eligible discounts
     const groupDiscountAmount = calculateGroupDiscount(totalAdultNum);

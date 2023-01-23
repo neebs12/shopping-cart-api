@@ -1,9 +1,6 @@
 const { addTicketsByCartId } = require("../../db/dbfunctions/ticket.js");
 const { addDiscountsByCartId } = require("../../db/dbfunctions/discount.js");
-const {
-  determineEligibleDiscountsByTickets,
-  filterByExisingDiscountsForCartId,
-} = require("./discount.js");
+const { determineEligibleDiscountsByTickets } = require("./discount.js");
 
 const { removeAllByTableName } = require("../../db/dbfunctions/generic.js");
 
@@ -325,7 +322,7 @@ describe("family discount calculation", () => {
 
 // group-family calculation
 describe("Group Family Discount", () => {
-  it("4A, 3C - 1g, 1f => filter to NA", async () => {
+  it("4A, 3C - 1g, 1f => apply a 1g, removes 1f eligibility, becomes NA", async () => {
     await addTicketsByCartId(cartId, [
       ...Array(4).fill(adultTicketEvent2),
       ...Array(3).fill(childTicketEvent2),
@@ -350,25 +347,23 @@ describe("Group Family Discount", () => {
     // add a group ticket to the db for event 2
     await addDiscountsByCartId(cartId, [groupDiscountEvent2]);
 
-    const filteredDiscounts1 = await filterByExisingDiscountsForCartId(
-      cartId,
-      eligibleDiscounts
+    const eligibleDiscounts2 = await determineEligibleDiscountsByTickets(
+      cartId
     );
 
-    // 1 discount should be left
+    // NO discount should be left. The family discount is also invalidated
     // that discount should be a family discount
-    expect(filteredDiscounts1.length).toBe(1);
+    expect(eligibleDiscounts2.length).toBe(0);
 
     // add a family ticket to the db for event 2
     await addDiscountsByCartId(cartId, [familyDiscountEvent2]);
 
-    const filteredDiscounts2 = await filterByExisingDiscountsForCartId(
-      cartId,
-      eligibleDiscounts
+    const eligibleDiscounts3 = await determineEligibleDiscountsByTickets(
+      cartId
     );
 
     // no discount left
-    expect(filteredDiscounts2.length).toBe(0);
+    expect(eligibleDiscounts3.length).toBe(0);
   });
 
   it("4A, 4C - 1g, 1f", async () => {
@@ -394,7 +389,7 @@ describe("Group Family Discount", () => {
     expect(familyDiscounts.amount).toBe(1);
   });
 
-  it("4A, 5C - 1g, 2f => filter to 1g, 1f", async () => {
+  it("4A, 5C - 1g, 2f => applied 1f, now 2A 2C undiscounted so filter to 1f", async () => {
     await addTicketsByCartId(cartId, [
       ...Array(4).fill(adultTicketEvent2),
       ...Array(5).fill(childTicketEvent2),
@@ -420,17 +415,16 @@ describe("Group Family Discount", () => {
     // invalidate one of the family discounts by writing to the db
     await addDiscountsByCartId(cartId, [familyDiscountEvent2]);
 
-    const filteredDiscounts1 = await filterByExisingDiscountsForCartId(
-      cartId,
-      eligibleDiscounts
+    const eligibleDiscounts2 = await determineEligibleDiscountsByTickets(
+      cartId
     );
 
-    const filteredFamilyDiscounts = filterDiscounts(eligibleDiscounts, {
+    const filteredFamilyDiscounts = filterDiscounts(eligibleDiscounts2, {
       type: "Family",
     });
 
-    // 2 discount should be left, 1g, 1f
-    expect(filteredDiscounts1.length).toBe(2);
+    // 1 discount should be left
+    expect(eligibleDiscounts2.length).toBe(1);
     expect(filteredFamilyDiscounts.length).toBe(1);
   });
 
@@ -458,7 +452,7 @@ describe("Group Family Discount", () => {
   });
 
   // cross events
-  it("(4/4)A, (2/2)C across two events - 2g, 2f => applied 1 discount across event 1g, 1f", async () => {
+  it("(4/4)A, (2/2)C across two events - 2g, 2f => 1g applied on event_id 2, 1f applied to event_id 3, no undiscounted tickets now eligible", async () => {
     await addTicketsByCartId(cartId, [
       ...Array(4).fill(adultTicketEvent2),
       ...Array(2).fill(childTicketEvent2),
@@ -489,28 +483,15 @@ describe("Group Family Discount", () => {
       familyDiscountEvent3,
     ]);
 
-    const filteredDiscounts1 = await filterByExisingDiscountsForCartId(
-      cartId,
-      eligibleDiscounts
+    const eligibleDiscounts2 = await determineEligibleDiscountsByTickets(
+      cartId
     );
 
-    const groupDiscounts1 = filterDiscounts(filteredDiscounts1, {
-      type: "Group",
-    });
-
-    const familyDiscounts1 = filterDiscounts(filteredDiscounts1, {
-      type: "Family",
-    });
-
-    // 2 discount should be left, 1g, 1f
-    expect(filteredDiscounts1.length).toBe(2);
-    // groupDiscount should be for event id 3
-    expect(groupDiscounts1[0].event_id).toBe(3);
-    // familyDiscount should be for event id 2
-    expect(familyDiscounts1[0].event_id).toBe(2);
+    // no tickets eligible for discount
+    expect(eligibleDiscounts2.length).toBe(0);
   });
 
-  it("(3/4) Adult, (2/1) Child across two events - 1g, 1f => applied non-related discount, 1g, 1f", async () => {
+  it("(3/4)A, (2/1)C across two events - 1g, 1f => applied non-related discount but still picked up as discounted - NA", async () => {
     await addTicketsByCartId(cartId, [
       ...Array(3).fill(adultTicketEvent2),
       ...Array(2).fill(childTicketEvent2),
@@ -542,12 +523,48 @@ describe("Group Family Discount", () => {
       familyDiscountEvent3,
     ]);
 
-    const filteredDiscounts1 = await filterByExisingDiscountsForCartId(
-      cartId,
-      eligibleDiscounts
+    const eligibleDiscounts2 = await determineEligibleDiscountsByTickets(
+      cartId
     );
 
-    // same as before
-    expect(filteredDiscounts1.length).toBe(eligibleDiscounts.length);
+    expect(eligibleDiscounts2.length).toBe(0);
+  });
+
+  it("6A, 2C - 1g, 1f => apply 1f, 4A remaining - 1g", async () => {
+    await addTicketsByCartId(cartId, [
+      ...Array(6).fill(adultTicketEvent2),
+      ...Array(2).fill(childTicketEvent2),
+    ]);
+
+    const eligibleDiscounts = await determineEligibleDiscountsByTickets(cartId);
+
+    const groupDiscounts = filterDiscounts(eligibleDiscounts, {
+      type: "Group",
+    });
+
+    const familyDiscounts = filterDiscounts(eligibleDiscounts, {
+      type: "Family",
+    });
+
+    // 2 discount types
+    expect(eligibleDiscounts.length).toBe(2);
+    // 1 group, 1 family
+    expect(groupDiscounts.length).toBe(1);
+    expect(familyDiscounts.length).toBe(1);
+
+    // write a family discount for event_id = 2 in the db
+    await addDiscountsByCartId(cartId, [familyDiscountEvent2]);
+
+    const eligibleDiscounts2 = await determineEligibleDiscountsByTickets(
+      cartId
+    );
+
+    const groupDiscounts2 = filterDiscounts(eligibleDiscounts2, {
+      type: "Group",
+    });
+
+    // 1 discount should be left and its a group discount
+    expect(eligibleDiscounts2.length).toBe(1);
+    expect(groupDiscounts2.length).toBe(1);
   });
 });

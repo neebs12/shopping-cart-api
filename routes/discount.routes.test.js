@@ -6,10 +6,18 @@ const { addTicketsByCartId } = require("../db/dbfunctions/ticket.js");
 const { removeAllByTableName } = require("../db/dbfunctions/generic.js");
 
 const cartId = 200;
+const otherCart = 201;
 const adultTicketEvent2 = {
   event_id: 2,
   type: "Adult",
   price: 20,
+  seat_id: null,
+  ga_area_id: 1,
+};
+const childTicketEvent2 = {
+  event_id: 2,
+  type: "Child",
+  price: 15,
   seat_id: null,
   ga_area_id: 1,
 };
@@ -40,13 +48,16 @@ describe("get all discounts for a cart", () => {
     expect(response.body.discounts.length).toBe(1);
   });
   it("a different cart with 4As does not affect another cart", async () => {
-    await addTicketsByCartId(100, Array(4).fill({ ...adultTicketEvent2 }));
+    await addTicketsByCartId(
+      otherCart,
+      Array(4).fill({ ...adultTicketEvent2 })
+    );
 
     const response = await request.get(`/cart/${cartId}/discount`);
     // cart 200 does not have it
     expect(response.body.discounts.length).toBe(0);
     // cart 100 should have it
-    const response2 = await request.get(`/cart/100/discount`);
+    const response2 = await request.get(`/cart/${otherCart}/discount`);
     expect(response2.body.discounts.length).toBe(1);
   });
 });
