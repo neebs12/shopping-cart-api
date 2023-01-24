@@ -7,7 +7,7 @@ const {
   checkGlobalLimitForGAEvent,
   checkSeatAvailabilityForAllocatedEvent,
 } = require("./helpers/ticket.js");
-const { invalidateAnyDiscountsForCartId } = require("./helpers/discount.js");
+const { invalidateDiscountForCartId } = require("./helpers/discount.js");
 const { fetchEventById } = require("../data/events-service.js");
 const {
   fetchTicketsByCartIdAndEventId,
@@ -133,15 +133,16 @@ router.delete("/:ticket_id", async (req, res, next) => {
     );
 
     if (numTicketsDeleted === 0) {
-      throw new Error(
-        `Ticket of cart:${cartId} and ticket:${ticketId} does not exist`
-      );
+      next({
+        type: "client",
+        message: `Ticket of cart:${cartId} and ticket:${ticketId} does not exist`,
+      });
     } else {
-      await invalidateAnyDiscountsForCartId(cartId);
+      await invalidateDiscountForCartId(cartId);
       res.json({ message: "ticket deleted" });
     }
   } catch (err) {
-    next({ type: "client", message: err.message });
+    next({ type: "internal", message: err.message });
   }
 });
 
