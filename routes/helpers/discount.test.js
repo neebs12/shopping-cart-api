@@ -1,10 +1,17 @@
 const { addTicketsByCartId } = require("../../db/dbfunctions/ticket.js");
-const { addDiscountsByCartId } = require("../../db/dbfunctions/discount.js");
-const { determineEligibleDiscountsByTickets } = require("./discount.js");
+const {
+  fetchDiscountsByCartId,
+  addDiscountsByCartId,
+} = require("../../db/dbfunctions/discount.js");
+const {
+  determineEligibleDiscountsByTickets,
+  invalidateDiscountForCartId,
+} = require("./discount.js");
 
 const { removeAllByTableName } = require("../../db/dbfunctions/generic.js");
 
 const cartId = 200;
+const otherCartId = 201;
 
 const adultTicketEvent2 = {
   event_id: 2,
@@ -566,5 +573,239 @@ describe("Group Family Discount", () => {
     // 1 discount should be left and its a group discount
     expect(eligibleDiscounts2.length).toBe(1);
     expect(groupDiscounts2.length).toBe(1);
+  });
+});
+
+// discount invalidation test
+describe("discount invalidation tests", () => {
+  it("3A w/ 1g, invalidate 1g", async () => {
+    // add 3A
+    await addTicketsByCartId(cartId, [...Array(3).fill(adultTicketEvent2)]);
+    // force 1g
+    await addDiscountsByCartId(cartId, [groupDiscountEvent2]);
+
+    const groupDiscounts1 = await fetchDiscountsByCartId(cartId);
+
+    // 1 discount should be expected in db
+    expect(groupDiscounts1.length).toBe(1);
+
+    // invalidate the discount
+    await invalidateDiscountForCartId(cartId);
+
+    const groupDiscounts2 = await fetchDiscountsByCartId(cartId);
+    // discount should have been removed from db
+    expect(groupDiscounts2.length).toBe(0);
+  });
+  it("4A w/ 2g, invalidate 1g, 1 left", async () => {
+    // add 4A
+    await addTicketsByCartId(cartId, [...Array(4).fill(adultTicketEvent2)]);
+    // force 100g
+    await addDiscountsByCartId(cartId, [...Array(2).fill(groupDiscountEvent2)]);
+
+    const groupDiscounts1 = await fetchDiscountsByCartId(cartId);
+
+    // 100 discounts should be expected in db
+    expect(groupDiscounts1.length).toBe(2);
+
+    // invalidate 99 discounts
+    await invalidateDiscountForCartId(cartId);
+
+    const groupDiscounts2 = await fetchDiscountsByCartId(cartId);
+    // 1 discount should be left in db
+    expect(groupDiscounts2.length).toBe(1);
+  });
+  it("2A, 1C w/ 1f, 1g, invalidate both", async () => {
+    // add 2A, 1C
+    await addTicketsByCartId(cartId, [
+      ...Array(2).fill(adultTicketEvent2),
+      ...Array(1).fill(childTicketEvent2),
+    ]);
+    // force 1f, 1g
+    await addDiscountsByCartId(cartId, [
+      familyDiscountEvent2,
+      groupDiscountEvent2,
+    ]);
+
+    const discounts1 = await fetchDiscountsByCartId(cartId);
+
+    // 2 discounts should be expected in db
+    expect(discounts1.length).toBe(2);
+
+    // invalidate the discount
+    await invalidateDiscountForCartId(cartId);
+
+    const discounts2 = await fetchDiscountsByCartId(cartId);
+    // discount should have been removed from db
+    expect(discounts2.length).toBe(0);
+  });
+  it("3A, 2C w/ 1f, 1g, invalidate 1g only", async () => {
+    // add 3A, 2C
+    await addTicketsByCartId(cartId, [
+      ...Array(3).fill(adultTicketEvent2),
+      ...Array(2).fill(childTicketEvent2),
+    ]);
+    // force 1f, 1g
+    await addDiscountsByCartId(cartId, [
+      familyDiscountEvent2,
+      groupDiscountEvent2,
+    ]);
+
+    const discounts1 = await fetchDiscountsByCartId(cartId);
+
+    // 2 discounts should be expected in db
+    expect(discounts1.length).toBe(2);
+
+    // invalidate the discount
+    await invalidateDiscountForCartId(cartId);
+
+    const discounts2 = await fetchDiscountsByCartId(cartId);
+    // group discount should have been removed from db
+    expect(discounts2.length).toBe(1);
+    expect(discounts2[0].type).toBe("Family");
+  });
+  it("4A, 6C w/ 3f, 2g, invalidate 1f, 1g only", async () => {
+    // add 4A, 6C
+    await addTicketsByCartId(cartId, [
+      ...Array(4).fill(adultTicketEvent2),
+      ...Array(6).fill(childTicketEvent2),
+    ]);
+    // force 3f, 2g
+    await addDiscountsByCartId(cartId, [
+      ...Array(3).fill(familyDiscountEvent2),
+      ...Array(2).fill(groupDiscountEvent2),
+    ]);
+
+    const discounts1 = await fetchDiscountsByCartId(cartId);
+
+    // 5 discounts should be expected in db
+    expect(discounts1.length).toBe(5);
+
+    // invalidate the discount
+    await invalidateDiscountForCartId(cartId);
+
+    const discounts2 = await fetchDiscountsByCartId(cartId);
+    // 3 discounts should be left in db
+    expect(discounts2.length).toBe(3);
+    // 1 group, 2 family
+    expect(discounts2.filter((d) => d.type === "Group").length).toBe(1);
+    expect(discounts2.filter((d) => d.type === "Family").length).toBe(2);
+  });
+  it("4A w/ 1g, no invalidation", async () => {
+    // add 4A
+    await addTicketsByCartId(cartId, [...Array(4).fill(adultTicketEvent2)]);
+    // force 1g
+    await addDiscountsByCartId(cartId, [groupDiscountEvent2]);
+
+    const groupDiscounts1 = await fetchDiscountsByCartId(cartId);
+
+    // 1 discount should be expected in db
+    expect(groupDiscounts1.length).toBe(1);
+
+    // invalidate the discount
+    await invalidateDiscountForCartId(cartId);
+
+    const groupDiscounts2 = await fetchDiscountsByCartId(cartId);
+    // discount should be ignored
+    expect(groupDiscounts2.length).toBe(1);
+  });
+  it("4A, 2C w/ 1g, 1f, no invalidation", async () => {
+    // add 4A, 2C
+    await addTicketsByCartId(cartId, [
+      ...Array(4).fill(adultTicketEvent2),
+      ...Array(2).fill(childTicketEvent2),
+    ]);
+    // force 1g, 1f
+    await addDiscountsByCartId(cartId, [
+      groupDiscountEvent2,
+      familyDiscountEvent2,
+    ]);
+
+    const discounts1 = await fetchDiscountsByCartId(cartId);
+
+    // 2 discounts should be expected in db
+    expect(discounts1.length).toBe(2);
+
+    // invalidate the discount
+    await invalidateDiscountForCartId(cartId);
+
+    const discounts2 = await fetchDiscountsByCartId(cartId);
+    // discount should be ignored
+    expect(discounts2.length).toBe(2);
+  });
+  it("3A, w/ 1g in another cart, no invalidation for our cart", async () => {
+    // add 3A
+    await addTicketsByCartId(otherCartId, [
+      ...Array(3).fill(adultTicketEvent2),
+    ]);
+    // force 1g
+    await addDiscountsByCartId(otherCartId, [groupDiscountEvent2]);
+
+    const groupDiscounts1 = await fetchDiscountsByCartId(otherCartId);
+
+    // 1 discount should be expected in db
+    expect(groupDiscounts1.length).toBe(1);
+
+    // invalidate the discount for cartId (not other cart)
+    await invalidateDiscountForCartId(cartId);
+
+    const groupDiscounts2 = await fetchDiscountsByCartId(otherCartId);
+    // discount should be ignored
+    expect(groupDiscounts2.length).toBe(1);
+  });
+});
+
+describe("cross event invalidation tests", () => {
+  it("(3/4)A w/ (1/1)g, invalidate 1/0g", async () => {
+    // add 3A
+    await addTicketsByCartId(cartId, [
+      ...Array(3).fill(adultTicketEvent2),
+      ...Array(4).fill(adultTicketEvent3),
+    ]);
+    // force 1g for both events
+    await addDiscountsByCartId(cartId, [
+      groupDiscountEvent2,
+      groupDiscountEvent3,
+    ]);
+
+    const groupDiscounts1 = await fetchDiscountsByCartId(cartId);
+
+    // 1 discount should be expected in db
+    expect(groupDiscounts1.length).toBe(2);
+
+    // invalidate the discount
+    await invalidateDiscountForCartId(cartId);
+
+    // only one group discount should remain, and that should be for event 3
+    const groupDiscounts2 = await fetchDiscountsByCartId(cartId);
+    expect(groupDiscounts2.length).toBe(1);
+    expect(groupDiscounts2[0].event_id).toBe(3);
+  });
+
+  it("(2/2)A, (1/2) w/ (1/1)f, invalidate 1/0f", async () => {
+    // add 2A, 2C
+    await addTicketsByCartId(cartId, [
+      ...Array(2).fill(adultTicketEvent2),
+      ...Array(2).fill(adultTicketEvent3),
+      ...Array(1).fill(childTicketEvent2),
+      ...Array(2).fill(childTicketEvent3),
+    ]);
+    // force 1f for both events
+    await addDiscountsByCartId(cartId, [
+      familyDiscountEvent2,
+      familyDiscountEvent3,
+    ]);
+
+    const familyDiscounts1 = await fetchDiscountsByCartId(cartId);
+
+    // 1 discount should be expected in db
+    expect(familyDiscounts1.length).toBe(2);
+
+    // invalidate the discount
+    await invalidateDiscountForCartId(cartId);
+
+    // only one group discount should remain, and that should be for event 3
+    const familyDiscounts2 = await fetchDiscountsByCartId(cartId);
+    expect(familyDiscounts2.length).toBe(1);
+    expect(familyDiscounts2[0].event_id).toBe(3);
   });
 });

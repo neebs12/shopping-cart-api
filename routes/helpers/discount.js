@@ -4,11 +4,10 @@ const {
 } = require("../../db/dbfunctions/ticket.js");
 
 const {
+  fetchDiscountsByCartId,
   fetchDiscountsByCartIdAndEventIdAndType,
+  removeDiscountById,
 } = require("../../db/dbfunctions/discount.js");
-
-// invalidate discounts for cart
-const invalidateAnyDiscountsForCartId = async (cartId) => {};
 
 // if there are 4<= adult tickets, then there is ONE group discount
 const calculateGroupDiscount = (numOfAdultTickets) => {
@@ -162,23 +161,74 @@ const isDiscountValid = async (cartId, newDiscount) => {
 };
 
 const invalidateDiscountForCartId = async (cartId) => {
-  // so the tickets are already deleted and the collection has been modified.
-  // given the new collection of tickets determine if the current collection of discounts are still valid
-  // if it is not valid, we need to remove those discounts until the collection of tickets is valid again
-  // - fetch all the discounts for the cart
-  // - get all the unique event_ids for the cart `uniqueEventIds`
-  // - iterate over `uniqueEventIds` to get the amount of "Group" and "Family" type discounts to get `groupDiscountAmount` and `familyDiscountAmount`
-  // - get the total number of "Adult" and "Child" tickets for each event_id
-  //   - NOT accounting for exisiting discounts! `adultNum` `childNum`
-  // - use `eligibleFamilyDiscount` = `calculateEligibleFamilyDiscount(adultNum, childNum)`
-  // - if there are any discrepancy between `eligibleFamilyDiscount` and `familyDiscountAmount` (ie: `eligibleFamilyDiscount` < `familyDiscountAmount`), then we need to remove the family discount! (so we need to fetch an id and remove that by that id)
-  // - use `eligibleGroupDiscount` = `calculateEligibleGroupDiscount(adultNum)`
-  // - if there are any discrepancy between `eligibleGroupDiscount` and `groupDiscountAmount` (ie: `eligibleGroupDiscount` < `groupDiscountAmount`), then we need to remove the group discount! (so we need to fetch an id and remove that by that id)
-  // at this point, the discounts are valid again
+  const discounts = await fetchDiscountsByCartId(cartId);
+  const uniqueEventIds = Array.from(
+    new Set(discounts.map((ticket) => ticket.event_id))
+  );
+
+  // console.log({ uniqueEventIds });
+
+  for (let eventId of uniqueEventIds) {
+    // fetch all discounts for this eventId and cart
+    const familyDiscounts = await fetchDiscountsByCartIdAndEventIdAndType(
+      cartId,
+      eventId,
+      "Family"
+    );
+    const groupDiscounts = await fetchDiscountsByCartIdAndEventIdAndType(
+      cartId,
+      eventId,
+      "Group"
+    );
+
+    // console.log({ cartId, eventId, groupDiscounts });
+
+    const familyDiscountAmount = familyDiscounts.length;
+    const groupDiscountAmount = groupDiscounts.length;
+
+    // get total number of adult and child tickets
+    const totalAdultNum = (
+      await fetchTicketsByCartIdAndEventIdAndType(cartId, eventId, "Adult")
+    ).length;
+    const totalChildNum = (
+      await fetchTicketsByCartIdAndEventIdAndType(cartId, eventId, "Child")
+    ).length;
+
+    // discount type: "Family"
+    // calculate amount of family discounts eligible!
+    const eligibleFamilyDiscountAmount = calculateFamilyDiscount(
+      totalAdultNum,
+      totalChildNum
+    );
+
+    // if at anytime, the amount of applied family discounts exceeds elgiible discounts, we need to remove the discount
+    // each removal only guarantees one removal
+    if (eligibleFamilyDiscountAmount < familyDiscountAmount) {
+      // remove by the difference in the amount
+      const difference = familyDiscountAmount - eligibleFamilyDiscountAmount;
+      for (let i = 0; i < difference; i++) {
+        const discountId = familyDiscounts[i].id;
+        await removeDiscountById(discountId);
+      }
+    }
+
+    // discount type: "Group"
+    const eligibleGroupDiscountAmount = calculateGroupDiscount(totalAdultNum);
+    // if at anytime, the amount of applied group discounts exceeds elgiible discounts, we need to remove the discount
+    // each removal only guarantees one removal
+    if (eligibleGroupDiscountAmount < groupDiscountAmount) {
+      // remove by the difference in the amount
+      const difference = groupDiscountAmount - eligibleGroupDiscountAmount;
+      for (let i = 0; i < difference; i++) {
+        const discountId = groupDiscounts[i].id;
+        await removeDiscountById(discountId);
+      }
+    }
+  }
 };
 
 module.exports = {
-  invalidateAnyDiscountsForCartId,
   determineEligibleDiscountsByTickets,
   isDiscountValid,
+  invalidateDiscountForCartId,
 };

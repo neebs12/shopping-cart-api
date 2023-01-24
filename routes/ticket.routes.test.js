@@ -3,11 +3,15 @@ const supertest = require("supertest");
 const request = supertest(app);
 
 const { removeAllByTableName } = require("../db/dbfunctions/generic.js");
-// const { removeTicketByCartId } = require("../db/dbfunctions/ticket.js");
+// const {
+//   fetchDiscountsByCartId,
+//   addDiscountsByCartId,
+// } = require("../../db/dbfunctions/discount.js");
 
 beforeEach(async () => {
   // remove all tickets
   await removeAllByTableName("ticket");
+  await removeAllByTableName("discount");
 });
 
 afterEach(async () => {});
