@@ -2,8 +2,8 @@ const app = require("./server.js");
 const supertest = require("supertest");
 const request = supertest(app);
 
-// test health from "/"
 describe("general", () => {
+  // test health from "/"
   it("GET /", async () => {
     const response = await request.get("/");
     expect(response.status).toBe(200);

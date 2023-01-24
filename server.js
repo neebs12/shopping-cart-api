@@ -6,7 +6,6 @@ const cartRoutes = require("./routes/cart.routes.js");
 const ticketRoutes = require("./routes/ticket.routes.js");
 const discountRoutes = require("./routes/discount.routes.js");
 
-const cartDB = require("./db/dbfunctions/cart.js");
 const { ENV } = process.env;
 
 const app = express();

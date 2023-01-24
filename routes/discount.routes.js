@@ -9,6 +9,11 @@ const {
 
 const router = express.Router();
 
+/**
+ * get ticket from cart
+ * - determine eligible discounts from tickets inside cart in cartId
+ * - return the eligible discounts
+ */
 router.get("/", async (req, res, next) => {
   try {
     const cartId = res.locals.cartId;
@@ -21,6 +26,11 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+/**
+ * apply discount to cart
+ * - validate discount for cart first
+ * - apply discount if valid, return 400 status otherwise
+ */
 router.post("/", async (req, res, next) => {
   try {
     const cartId = res.locals.cartId;
